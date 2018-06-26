@@ -149,20 +149,25 @@ if [ "$1" = 'mysqld' -a -z "$wantHelp" ]; then
 			mysql+=( -p"${MYSQL_ROOT_PASSWORD}" )
 		fi
 
-		file_env 'MYSQL_DATABASE'
-		if [ "$MYSQL_DATABASE" ]; then
-			echo "CREATE DATABASE IF NOT EXISTS \`$MYSQL_DATABASE\` ;" | "${mysql[@]}"
-			mysql+=( "$MYSQL_DATABASE" )
-		fi
-
 		file_env 'MYSQL_USER'
 		file_env 'MYSQL_PASSWORD'
 		if [ "$MYSQL_USER" -a "$MYSQL_PASSWORD" ]; then
 			echo "CREATE USER '$MYSQL_USER'@'%' IDENTIFIED BY '$MYSQL_PASSWORD' ;" | "${mysql[@]}"
+		fi
 
-			if [ "$MYSQL_DATABASE" ]; then
-				echo "GRANT ALL ON \`$MYSQL_DATABASE\`.* TO '$MYSQL_USER'@'%' ;" | "${mysql[@]}"
-			fi
+		file_env 'MYSQL_DATABASE'
+		echo "Creating database(s) $MYSQL_DATABASE"
+		if [ "$MYSQL_DATABASE" ]; then
+			mysql=( mysql --protocol=socket -uroot -p"${MYSQL_ROOT_PASSWORD}" -hlocalhost --socket="${SOCKET}" )
+			for DB in $MYSQL_DATABASE
+			do
+				echo "Creating database $DB"
+				echo "CREATE DATABASE IF NOT EXISTS \`$DB\` ;" | "${mysql[@]}"
+
+				if [ "$MYSQL_USER" ]; then
+					echo "GRANT ALL ON \`$DB\`.* TO '$MYSQL_USER'@'%' ;" | "${mysql[@]}"
+				fi
+			done
 		fi
 
 		echo

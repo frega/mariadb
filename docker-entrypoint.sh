@@ -166,11 +166,13 @@ if [ "$1" = 'mysqld' -a -z "$wantHelp" ]; then
 		fi
 
 		file_env 'MYSQL_DATABASES'
+		echo "Checking for $MYSQL_DATABASES"
 		if [ "$MYSQL_DATABASES" ]; then
 			for DB in $MYSQL_DATABASES
 			do
+				echo "Creating database $DB"
+				mysql=( mysql --protocol=socket -uroot -hlocalhost --socket="${SOCKET}" )
 				echo "CREATE DATABASE IF NOT EXISTS \`$DB\` ;" | "${mysql[@]}"
-				mysql+=( "$DB" )
 
 				if [ "$MYSQL_USER" ]; then
 					echo "GRANT ALL ON \`$DB\`.* TO '$MYSQL_USER'@'%' ;" | "${mysql[@]}"
