@@ -165,6 +165,19 @@ if [ "$1" = 'mysqld' -a -z "$wantHelp" ]; then
 			fi
 		fi
 
+		file_env 'MYSQL_DATABASES'
+		if [ "$MYSQL_DATABASES" ]; then
+			for DB in $MYSQL_DATABASES
+			do
+				echo "CREATE DATABASE IF NOT EXISTS \`$DB\` ;" | "${mysql[@]}"
+				mysql+=( "$DB" )
+
+				if [ "$MYSQL_USER" ]; then
+					echo "GRANT ALL ON \`$DB\`.* TO '$MYSQL_USER'@'%' ;" | "${mysql[@]}"
+				fi
+			done
+		fi
+
 		echo
 		for f in /docker-entrypoint-initdb.d/*; do
 			case "$f" in
